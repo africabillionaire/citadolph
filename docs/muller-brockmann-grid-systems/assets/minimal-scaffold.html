@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Müller-Brockmann Grid Scaffold</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+/* Müller-Brockmann Grid Tokens — one source of truth */
+:root {
+  --cols: 12;
+  --gutter: 24px;
+  --margin: 48px;
+  --bl: 8px;
+  --lh: 24px;
+  --maxw: 1280px;
+  --accent: #e4002b;
+  --ink: #111;
+  --paper: #fff;
+}
+
+/* Grid container */
+.grid {
+  display: grid;
+  grid-template-columns: var(--margin) repeat(var(--cols), 1fr) var(--margin);
+  column-gap: var(--gutter);
+  max-width: var(--maxw);
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Subgrid band — spans full width, re-exposes columns */
+.band {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--gutter);
+  align-items: start;
+}
+
+@supports not (grid-template-columns: subgrid) {
+  .band {
+    grid-template-columns: repeat(var(--cols), 1fr);
+  }
+}
+
+/* Overlay — lives INSIDE the same .grid container */
+.guides {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: var(--margin) repeat(var(--cols), 1fr) var(--margin);
+  column-gap: var(--gutter);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 9999;
+}
+
+body.grid-on .guides { opacity: 1; }
+
+.guides .col {
+  background: rgba(228, 0, 43, 0.06);
+  border-left: 1px dashed rgba(228, 0, 43, 0.25);
+  border-right: 1px dashed rgba(228, 0, 43, 0.25);
+  height: 100%;
+  position: relative;
+}
+
+.guides .col::after {
+  content: attr(data-col);
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font: 10px/1 "IBM Plex Mono", monospace;
+  color: rgba(228, 0, 43, 0.6);
+}
+
+/* Baseline overlay lines */
+.guides .baseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(228, 0, 43, 0.08);
+}
+
+.guides .baseline.major {
+  background: rgba(228, 0, 43, 0.18);
+}
+
+/* Margin lines */
+.guides .margin-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(228, 0, 43, 0.35);
+}
+.guides .margin-line.left { left: var(--margin); }
+.guides .margin-line.right { right: var(--margin); }
+
+/* Typography baseline lock */
+body {
+  font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  line-height: var(--lh);
+  margin: 0;
+}
+
+.masthead {
+  font-size: 96px;
+  line-height: 96px; /* px, not unitless — locks to grid */
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.body-text {
+  font-size: 16px;
+  line-height: var(--lh);
+  margin: 0 0 var(--lh) 0;
+}
+
+.numeral {
+  font-size: 180px;
+  line-height: 180px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+/* Utility: snap margins to baseline */
+.mb-1 { margin-bottom: var(--lh); }
+.mb-2 { margin-bottom: calc(var(--lh) * 2); }
+.mb-3 { margin-bottom: calc(var(--lh) * 3); }
+.mt-1 { margin-top: var(--lh); }
+.mt-2 { margin-top: calc(var(--lh) * 2); }
+
+/* Demo layout */
+.wrap { padding: var(--lh) 0; }
+.kicker {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: calc(var(--bl) * 2);
+}
+.media {
+  background: #ddd;
+  height: calc(var(--lh) * 15); /* 360px = multiple of 24 */
+  width: 100%;
+}
+.caption {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  line-height: var(--lh);
+  color: #666;
+  margin-top: var(--bl);
+}
+.toggle-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 10px 18px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<button class="toggle-btn" onclick="document.body.classList.toggle('grid-on')">Toggle Grid (G)</button>
+
+<section class="wrap grid">
+  <!-- Grid overlay: SAME content box -->
+  <div class="guides" aria-hidden="true">
+    <div class="margin-line left"></div>
+    <div class="col" data-col="1"></div>
+    <div class="col" data-col="2"></div>
+    <div class="col" data-col="3"></div>
+    <div class="col" data-col="4"></div>
+    <div class="col" data-col="5"></div>
+    <div class="col" data-col="6"></div>
+    <div class="col" data-col="7"></div>
+    <div class="col" data-col="8"></div>
+    <div class="col" data-col="9"></div>
+    <div class="col" data-col="10"></div>
+    <div class="col" data-col="11"></div>
+    <div class="col" data-col="12"></div>
+    <div class="margin-line right"></div>
+    <div class="baseline " style="top:8px"></div>
+    <div class="baseline " style="top:16px"></div>
+    <div class="baseline major" style="top:24px"></div>
+    <div class="baseline " style="top:32px"></div>
+    <div class="baseline " style="top:40px"></div>
+    <div class="baseline major" style="top:48px"></div>
+    <div class="baseline " style="top:56px"></div>
+    <div class="baseline " style="top:64px"></div>
+    <div class="baseline major" style="top:72px"></div>
+    <div class="baseline " style="top:80px"></div>
+    <div class="baseline " style="top:88px"></div>
+    <div class="baseline major" style="top:96px"></div>
+    <div class="baseline " style="top:104px"></div>
+    <div class="baseline " style="top:112px"></div>
+    <div class="baseline major" style="top:120px"></div>
+    <div class="baseline " style="top:128px"></div>
+    <div class="baseline " style="top:136px"></div>
+    <div class="baseline major" style="top:144px"></div>
+    <div class="baseline " style="top:152px"></div>
+    <div class="baseline " style="top:160px"></div>
+    <div class="baseline major" style="top:168px"></div>
+    <div class="baseline " style="top:176px"></div>
+    <div class="baseline " style="top:184px"></div>
+    <div class="baseline major" style="top:192px"></div>
+    <div class="baseline " style="top:200px"></div>
+    <div class="baseline " style="top:208px"></div>
+    <div class="baseline major" style="top:216px"></div>
+    <div class="baseline " style="top:224px"></div>
+    <div class="baseline " style="top:232px"></div>
+    <div class="baseline major" style="top:240px"></div>
+    <div class="baseline " style="top:248px"></div>
+    <div class="baseline " style="top:256px"></div>
+    <div class="baseline major" style="top:264px"></div>
+    <div class="baseline " style="top:272px"></div>
+    <div class="baseline " style="top:280px"></div>
+    <div class="baseline major" style="top:288px"></div>
+    <div class="baseline " style="top:296px"></div>
+    <div class="baseline " style="top:304px"></div>
+    <div class="baseline major" style="top:312px"></div>
+    <div class="baseline " style="top:320px"></div>
+    <div class="baseline " style="top:328px"></div>
+    <div class="baseline major" style="top:336px"></div>
+    <div class="baseline " style="top:344px"></div>
+    <div class="baseline " style="top:352px"></div>
+    <div class="baseline major" style="top:360px"></div>
+    <div class="baseline " style="top:368px"></div>
+    <div class="baseline " style="top:376px"></div>
+    <div class="baseline major" style="top:384px"></div>
+    <div class="baseline " style="top:392px"></div>
+    <div class="baseline " style="top:400px"></div>
+    <div class="baseline major" style="top:408px"></div>
+    <div class="baseline " style="top:416px"></div>
+    <div class="baseline " style="top:424px"></div>
+    <div class="baseline major" style="top:432px"></div>
+    <div class="baseline " style="top:440px"></div>
+    <div class="baseline " style="top:448px"></div>
+    <div class="baseline major" style="top:456px"></div>
+    <div class="baseline " style="top:464px"></div>
+    <div class="baseline " style="top:472px"></div>
+    <div class="baseline major" style="top:480px"></div>
+    <div class="baseline " style="top:488px"></div>
+    <div class="baseline " style="top:496px"></div>
+    <div class="baseline major" style="top:504px"></div>
+    <div class="baseline " style="top:512px"></div>
+    <div class="baseline " style="top:520px"></div>
+    <div class="baseline major" style="top:528px"></div>
+    <div class="baseline " style="top:536px"></div>
+    <div class="baseline " style="top:544px"></div>
+    <div class="baseline major" style="top:552px"></div>
+    <div class="baseline " style="top:560px"></div>
+    <div class="baseline " style="top:568px"></div>
+    <div class="baseline major" style="top:576px"></div>
+    <div class="baseline " style="top:584px"></div>
+    <div class="baseline " style="top:592px"></div>
+    <div class="baseline major" style="top:600px"></div>
+    <div class="baseline " style="top:608px"></div>
+    <div class="baseline " style="top:616px"></div>
+    <div class="baseline major" style="top:624px"></div>
+    <div class="baseline " style="top:632px"></div>
+    <div class="baseline " style="top:640px"></div>
+  </div>
+
+  <!-- Band 1: Masthead -->
+  <div class="band mb-2">
+    <div style="grid-column: 2 / 8;">
+      <p class="kicker">Editorial — Issue 01</p>
+      <h1 class="masthead">Grid<br>Systems</h1>
+    </div>
+    <div style="grid-column: 9 / 13; align-self: end;" class="mb-1">
+      <p class="body-text">A rigorous approach to editorial layout on the web. Every element snaps to a column line and a baseline.</p>
+    </div>
+  </div>
+
+  <!-- Band 2: Media + Caption -->
+  <div class="band mb-2">
+    <div style="grid-column: 2 / 9;">
+      <div class="media"></div>
+      <p class="caption">Fig. 1 — Modular field grid, 12 columns, 8px baseline.</p>
+    </div>
+    <div style="grid-column: 10 / 13;">
+      <p class="body-text">The grid is an aid, not a guarantee. It permits a number of possible uses and each designer can look for a solution appropriate to his personal style.</p>
+      <p class="body-text">But one must learn how to use the grid; it is an art that requires practice.</p>
+    </div>
+  </div>
+
+  <!-- Band 3: Big Numeral -->
+  <div class="band mb-2">
+    <div style="grid-column: 2 / 5;">
+      <p class="numeral">12</p>
+    </div>
+    <div style="grid-column: 6 / 13; align-self: center;">
+      <p class="body-text">Columns divide the type area into a field of modules. Text and images occupy whole modules. The baseline grid brings vertical rhythm.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+/* Toggle: G key or button */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'g' || e.key === 'G') {
+    document.body.classList.toggle('grid-on');
+  }
+});
+
+/* Optical alignment: shift box so INK lands on the column line */
+function alignOptically() {
+  var cvs = document.createElement('canvas');
+  var ctx = cvs.getContext('2d');
+  document.querySelectorAll('.masthead, .numeral, .shead h2, .h2b').forEach(function(el) {
+    el.style.marginLeft = '0px';
+    var cs = getComputedStyle(el);
+    var ch = (el.textContent || '').trim()[0];
+    if (!ch) return;
+    if (cs.textTransform === 'uppercase') ch = ch.toUpperCase();
+    ctx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    ctx.textAlign = 'left';
+    var abl = ctx.measureText(ch).actualBoundingBoxLeft;
+    if (isFinite(abl)) el.style.marginLeft = abl.toFixed(2) + 'px';
+  });
+}
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(alignOptically);
+} else {
+  window.addEventListener('load', alignOptically);
+}
+window.addEventListener('resize', alignOptically);
+
+</script>
+</body>
+</html>

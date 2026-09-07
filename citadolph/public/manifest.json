@@ -1,0 +1,36 @@
+{
+  "name": "Citadolph",
+  "short_name": "Citadolph",
+  "description": "Digital Transformation Agency for Africa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e4002b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/logo_icon_black.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "technology"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Start a Project",
+      "short_name": "Project",
+      "description": "Start a new digital transformation project",
+      "url": "/#contact",
+      "icons": [{ "src": "/images/logo_icon_black.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Our Services",
+      "short_name": "Services",
+      "description": "Explore our 12 service domains",
+      "url": "/#services",
+      "icons": [{ "src": "/images/logo_icon_black.svg", "sizes": "192x192" }]
+    }
+  ]
+}
