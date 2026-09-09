@@ -16,7 +16,7 @@ export function Footer() {
   ] as const;
 
   return (
-    <footer className="border-t border-[var(--border)]" style={{ background: 'var(--paper-alt)' }} role="contentinfo">
+    <footer className="border-t border-[var(--border)]" style={{ background: 'var( --ink)' }} role="contentinfo">
       <div className="grid gap-[var(--gutter)]" style={{
         gridTemplateColumns: 'subgrid',
         padding: 'calc(var(--lh) * 4) 0',

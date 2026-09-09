@@ -3,6 +3,37 @@
  * Centralized content for easy maintenance and localization
  */
 
+export interface NavItem {
+  href: string;
+  label: string;
+  megaMenu?: string;
+}
+
+export interface MegaMenuItem {
+  label: string;
+  href: string;
+  description: string;
+}
+
+export interface MegaMenuColumn {
+  heading: string;
+  items: readonly MegaMenuItem[];
+}
+
+export interface MegaMenuData {
+  title: string;
+  columns: readonly MegaMenuColumn[];
+  cta: { label: string; href: string };
+  secondaryCta?: { label: string; href: string; variant: 'outline' | 'primary' | 'ghost' };
+}
+
+export interface AuthLink {
+  label: string;
+  href: string;
+  variant: 'ghost' | 'primary' | 'outline';
+  action?: 'signout';
+}
+
 export const siteConfig = {
   name: 'Citadolph',
   tagline: 'Digital Transformation Agency for Africa',
@@ -43,13 +74,138 @@ export const siteConfig = {
 
 export const navigation = {
   main: [
-    { href: '#services', label: 'Services' },
-    { href: '#process', label: 'Process' },
-    { href: '#about', label: 'About' },
-    { href: '#contact', label: 'Contact' },
-  ],
+    { href: '#', label: 'What We Do', megaMenu: 'what-we-do' },
+    { href: '#', label: 'What We Think', megaMenu: 'what-we-think' },
+    { href: '#about', label: 'Who We Are' },
+    { href: '#', label: 'Career', megaMenu: 'career' },
+    { href: '#contact', label: 'Contact Us' },
+  ] as const satisfies readonly NavItem[],
   cta: { href: '#contact', label: 'Start a Project' },
 } as const;
+
+export const megaMenus = {
+  'what-we-do': {
+    title: 'What We Do',
+    columns: [
+      {
+        heading: 'Digital Products',
+        items: [
+          { label: 'Website Development', href: '#', description: 'Custom websites optimized for performance & conversion' },
+          { label: 'Mobile Applications', href: '#', description: 'Native & cross-platform apps for iOS & Android' },
+          { label: 'ERP Implementation', href: '#', description: 'Enterprise systems tailored to your operations' },
+          { label: 'Management Systems', href: '#', description: 'Custom systems for clarity & scalability' },
+        ],
+      },
+      {
+        heading: 'Brand & Strategy',
+        items: [
+          { label: 'Personal Branding', href: '#', description: 'Build authority & resonance with your audience' },
+          { label: 'Design Services', href: '#', description: 'Brand identity, UI/UX, visual systems' },
+          { label: 'Digital Consultancy', href: '#', description: 'Strategic guidance for digital transformation' },
+          { label: 'Business Registration', href: '#', description: 'Company formation across African jurisdictions' },
+        ],
+      },
+      {
+        heading: 'Growth & Intelligence',
+        items: [
+          { label: 'Digital Marketing', href: '#', description: 'Data-driven strategies for measurable results' },
+          { label: 'Social Media Marketing', href: '#', description: 'Content strategy & community management' },
+          { label: 'AI Implementation', href: '#', description: 'Practical AI integration for real business problems' },
+          { label: 'Accounting & Auditing', href: '#', description: 'Professional financial services & compliance' },
+        ],
+      },
+    ],
+    cta: { label: 'View All Services', href: '#services' },
+  },
+  'what-we-think': {
+    title: 'What We Think',
+    columns: [
+      {
+        heading: 'Insights',
+        items: [
+          { label: 'Digital Strategy', href: '#', description: 'Frameworks for transformation & growth' },
+          { label: 'Design Thinking', href: '#', description: 'Swiss precision meets African innovation' },
+          { label: 'Technology Trends', href: '#', description: 'AI, Web3, & emerging tech analysis' },
+          { label: 'Market Research', href: '#', description: 'African digital landscape reports' },
+        ],
+      },
+      {
+        heading: 'Our Process',
+        items: [
+          { label: 'Discover', href: '#process', description: 'Free deep-dive into your business challenges' },
+          { label: 'Brief', href: '#process', description: 'Validated scope, timeline & success metrics' },
+          { label: 'Propose', href: '#process', description: 'Detailed activities, costs & team composition' },
+          { label: 'Build', href: '#process', description: 'Plan, design, implement, test & maintain' },
+          { label: 'Scale', href: '#process', description: 'Ongoing optimization & new initiatives' },
+        ],
+      },
+      {
+        heading: 'Resources',
+        items: [
+          { label: 'Case Studies', href: '#', description: 'Real transformations, measurable outcomes' },
+          { label: 'White Papers', href: '#', description: 'In-depth research & methodologies' },
+          { label: 'Playbooks', href: '#', description: 'Actionable guides for digital leaders' },
+          { label: 'Newsletter', href: '#', description: 'Monthly insights delivered to your inbox' },
+        ],
+      },
+    ],
+    cta: { label: 'Read Latest Thinking', href: '#' },
+  },
+  career: {
+    title: 'Career at Citadolph',
+    columns: [
+      {
+        heading: 'Open Roles',
+        items: [
+          { label: 'Senior Full-Stack Engineer', href: '#', description: 'React, Node.js, TypeScript — Remote (Africa)' },
+          { label: 'Product Designer', href: '#', description: 'UI/UX, Design Systems — Lagos / Remote' },
+          { label: 'Digital Strategist', href: '#', description: 'Consulting, Growth — Nairobi / Remote' },
+          { label: 'DevOps Engineer', href: '#', description: 'AWS, Kubernetes, CI/CD — Remote (Africa)' },
+          { label: 'Project Manager', href: '#', description: 'Agile, Client-facing — Accra / Remote' },
+          { label: 'Marketing Specialist', href: '#', description: 'Content, SEO, Growth — Remote (Africa)' },
+        ],
+      },
+      {
+        heading: 'Why Join Us',
+        items: [
+          { label: 'Swiss Design Culture', href: '#', description: 'Precision, clarity, purpose-driven craft' },
+          { label: 'African Impact', href: '#', description: "Build infrastructure for the continent's future" },
+          { label: 'Specialist Network', href: '#', description: 'Work with top agencies & independent experts' },
+          { label: 'Growth Pathway', href: '#', description: 'Contractor → Specialist → Partner track' },
+          { label: 'Flexible Remote', href: '#', description: 'Work from anywhere across Africa' },
+          { label: 'Competitive Package', href: '#', description: 'Equity, learning budget, wellness stipend' },
+        ],
+      },
+      {
+        heading: 'Life at Citadolph',
+        items: [
+          { label: 'Our Values', href: '#', description: 'Craft, Integrity, Impact, Curiosity' },
+          { label: 'Team Rituals', href: '#', description: 'Design crits, tech talks, hack weeks' },
+          { label: 'Learning & Development', href: '#', description: 'Conferences, courses, mentorship' },
+          { label: 'Diversity & Inclusion', href: '#', description: "Representing Africa's full spectrum" },
+          { label: 'Office Spaces', href: '#', description: 'Lagos, Nairobi, Accra, Cape Town hubs' },
+          { label: 'Alumni Stories', href: '#', description: 'Where our people go next' },
+        ],
+      },
+    ],
+    cta: { label: 'View All Openings', href: '#' },
+    secondaryCta: { label: 'Join Talent Network', href: '#', variant: 'outline' },
+  },
+} as const;
+
+// Auth state types
+export type AuthState = 'unauthenticated' | 'authenticated';
+
+export const authLinks: Record<AuthState, readonly AuthLink[]> = {
+  unauthenticated: [
+    { label: 'Login', href: '/login', variant: 'ghost' },
+    { label: 'Register', href: '/register', variant: 'primary' },
+  ],
+  authenticated: [
+    { label: 'Dashboard', href: '/dashboard', variant: 'ghost' },
+    { label: 'Sign Out', href: '/logout', variant: 'ghost', action: 'signout' },
+  ],
+};
 
 export const services = [
   {
@@ -189,6 +345,7 @@ export const footerLinks = {
     { href: '#about', label: 'About Us' },
     { href: '#contact', label: 'Contact' },
   ],
+ 
   legal: [
     { href: '#', label: 'Privacy Policy (GDPR)' },
     { href: '#', label: 'Terms of Service' },
