@@ -18,6 +18,8 @@ export interface MegaMenuItem {
 export interface MegaMenuColumn {
   heading: string;
   items: readonly MegaMenuItem[];
+  defaultExpanded?: boolean;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 export interface MegaMenuData {
@@ -83,12 +85,16 @@ export const navigation = {
   cta: { href: '#contact', label: 'Start a Project' },
 } as const;
 
+import { Briefcase, Lightbulb, Users, GraduationCap, Building2, Heart, MapPin, Clock } from 'lucide-react';
+
 export const megaMenus = {
   'what-we-do': {
     title: 'What We Do',
     columns: [
       {
         heading: 'Digital Products',
+        defaultExpanded: true,
+        icon: Briefcase,
         items: [
           { label: 'Website Development', href: '#', description: 'Custom websites optimized for performance & conversion' },
           { label: 'Mobile Applications', href: '#', description: 'Native & cross-platform apps for iOS & Android' },
@@ -98,6 +104,7 @@ export const megaMenus = {
       },
       {
         heading: 'Brand & Strategy',
+        icon: Lightbulb,
         items: [
           { label: 'Personal Branding', href: '#', description: 'Build authority & resonance with your audience' },
           { label: 'Design Services', href: '#', description: 'Brand identity, UI/UX, visual systems' },
@@ -107,6 +114,7 @@ export const megaMenus = {
       },
       {
         heading: 'Growth & Intelligence',
+        icon: Users,
         items: [
           { label: 'Digital Marketing', href: '#', description: 'Data-driven strategies for measurable results' },
           { label: 'Social Media Marketing', href: '#', description: 'Content strategy & community management' },
@@ -115,13 +123,15 @@ export const megaMenus = {
         ],
       },
     ],
-    cta: { label: 'View All Services', href: '#services' },
+    cta: { label: "See What You're Missing", href: '#services' },
   },
   'what-we-think': {
     title: 'What We Think',
     columns: [
       {
         heading: 'Insights',
+        defaultExpanded: true,
+        icon: Lightbulb,
         items: [
           { label: 'Digital Strategy', href: '#', description: 'Frameworks for transformation & growth' },
           { label: 'Design Thinking', href: '#', description: 'Swiss precision meets African innovation' },
@@ -131,6 +141,7 @@ export const megaMenus = {
       },
       {
         heading: 'Our Process',
+        icon: GraduationCap,
         items: [
           { label: 'Discover', href: '#process', description: 'Free deep-dive into your business challenges' },
           { label: 'Brief', href: '#process', description: 'Validated scope, timeline & success metrics' },
@@ -141,6 +152,7 @@ export const megaMenus = {
       },
       {
         heading: 'Resources',
+        icon: Building2,
         items: [
           { label: 'Case Studies', href: '#', description: 'Real transformations, measurable outcomes' },
           { label: 'White Papers', href: '#', description: 'In-depth research & methodologies' },
@@ -149,13 +161,15 @@ export const megaMenus = {
         ],
       },
     ],
-    cta: { label: 'Read Latest Thinking', href: '#' },
+    cta: { label: "Don't Miss Our Latest Insights", href: '#' },
   },
   career: {
     title: 'Career at Citadolph',
     columns: [
       {
         heading: 'Open Roles',
+        defaultExpanded: true,
+        icon: Briefcase,
         items: [
           { label: 'Senior Full-Stack Engineer', href: '#', description: 'React, Node.js, TypeScript — Remote (Africa)' },
           { label: 'Product Designer', href: '#', description: 'UI/UX, Design Systems — Lagos / Remote' },
@@ -167,6 +181,7 @@ export const megaMenus = {
       },
       {
         heading: 'Why Join Us',
+        icon: Heart,
         items: [
           { label: 'Swiss Design Culture', href: '#', description: 'Precision, clarity, purpose-driven craft' },
           { label: 'African Impact', href: '#', description: "Build infrastructure for the continent's future" },
@@ -178,6 +193,7 @@ export const megaMenus = {
       },
       {
         heading: 'Life at Citadolph',
+        icon: Users,
         items: [
           { label: 'Our Values', href: '#', description: 'Craft, Integrity, Impact, Curiosity' },
           { label: 'Team Rituals', href: '#', description: 'Design crits, tech talks, hack weeks' },
@@ -188,7 +204,7 @@ export const megaMenus = {
         ],
       },
     ],
-    cta: { label: 'View All Openings', href: '#' },
+    cta: { label: "Don't Miss Your Role", href: '#' },
     secondaryCta: { label: 'Join Talent Network', href: '#', variant: 'outline' },
   },
 } as const;
@@ -345,7 +361,6 @@ export const footerLinks = {
     { href: '#about', label: 'About Us' },
     { href: '#contact', label: 'Contact' },
   ],
- 
   legal: [
     { href: '#', label: 'Privacy Policy (GDPR)' },
     { href: '#', label: 'Terms of Service' },
