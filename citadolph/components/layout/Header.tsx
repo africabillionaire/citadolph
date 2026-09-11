@@ -4,10 +4,11 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Kicker, Text } from '@/components/ui/Typography';
-import { navigation, siteConfig, megaMenus, type NavItem, type MegaMenuData } from '@/lib/site-content';
+import { navigation, siteConfig, megaMenus, type NavItem } from '@/lib/site-content';
 import { UtilityBar } from './UtilityBar';
 import { MegaMenu } from './MegaMenu';
 import { MobileDrawer } from './MobileDrawer';
@@ -21,7 +22,12 @@ interface HeaderProps {
 export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [openMegaMenu, setOpenMegaMenu] = useState<string | null>(null);
+  const [openMegaMenu, setOpenMegaMenu] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('citadolph:openMegaMenu');
+    }
+    return null;
+  });
   const [hoveredMegaMenu, setHoveredMegaMenu] = useState<string | null>(null);
   const megaMenuTriggerRefs = useRef<Record<string, React.RefObject<HTMLButtonElement | null>>>({});
   const headerRef = useRef<HTMLElement>(null);
@@ -42,6 +48,11 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
 
   const handleMegaMenuTrigger = (menuKey: string | null) => {
     setOpenMegaMenu(menuKey);
+    if (menuKey) {
+      sessionStorage.setItem('citadolph:openMegaMenu', menuKey);
+    } else {
+      sessionStorage.removeItem('citadolph:openMegaMenu');
+    }
   };
 
   const handleMegaMenuHover = (menuKey: string | null) => {
@@ -60,6 +71,16 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
 
   return (
     <>
+      <style jsx global>{`
+        @keyframes pulse-once {
+          0%, 100% { box-shadow: var(--shadow-accent); }
+          50% { box-shadow: 0 0 0 4px rgba(228, 0, 43, 0.3); }
+        }
+        .animate-pulse-once {
+          animation: pulse-once 2s ease-out 1s 1;
+        }
+      `}</style>
+
       <UtilityBar authState={authState} onAuthAction={onAuthAction} />
 
       <header
@@ -152,7 +173,7 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
 
                   {hasMegaMenu && (
                     <MegaMenu
-                      data={megaMenus[item.megaMenu as keyof typeof megaMenus] as MegaMenuData}
+                      data={megaMenus[item.megaMenu as keyof typeof megaMenus]}
                       triggerRef={megaMenuTriggerRefs.current[item.megaMenu!] || { current: null }}
                       isOpen={openMegaMenu === item.megaMenu || hoveredMegaMenu === item.megaMenu}
                       onClose={() => { setOpenMegaMenu(null); setHoveredMegaMenu(null); }}
@@ -165,14 +186,40 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
           </div>
 
           <div className="flex items-center justify-end gap-3" style={{ gridColumn: '11 / 13' }}>
-            <Button
-              variant="primary"
-              size="sm"
-              className="hidden lg:inline-flex"
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={cn(
+                'hidden lg:inline-flex',
+                'relative z-10',
+                'px-6 py-2.5',
+                'shadow-[var(--shadow-accent)]',
+                'hover:shadow-[0_8px_32px_rgba(228,0,43,0.4)]',
+                'transition-all duration-200',
+                'animate-pulse-once'
+              )}
               onClick={() => handleNavClick(navigation.cta.href)}
+              style={{
+                background: 'var(--accent)',
+                color: 'var(--paper)',
+                border: '2px solid var(--accent)',
+                borderRadius: 'var(--radius-sm)',
+                font: '600 13px/1 var(--font-sans)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.02em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
             >
               {navigation.cta.label}
-            </Button>
+              <motion.span
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                →
+              </motion.span>
+            </motion.button>
             <button
               className="lg:hidden p-2 rounded-lg transition-colors"
               style={{ background: 'var(--paper-alt)' }}

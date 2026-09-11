@@ -18,14 +18,14 @@ interface MegaMenuItem {
 
 interface MegaMenuColumn {
   heading: string;
-  items: MegaMenuItem[];
+  items: readonly MegaMenuItem[];
   defaultExpanded?: boolean;
   icon?: React.ComponentType<{ className?: string }>;
 }
 
 interface MegaMenuData {
   title: string;
-  columns: MegaMenuColumn[];
+  columns: readonly MegaMenuColumn[];
   cta: { label: string; href: string };
   secondaryCta?: { label: string; href: string; variant: 'outline' | 'primary' | 'ghost' };
 }
@@ -83,7 +83,7 @@ function CollapsibleSection({
   title, 
   children, 
   defaultOpen = false,
-  icon: Icon,
+  icon: IconComponent,
   itemCount = 0
 }: { 
   title: string; 
@@ -107,7 +107,11 @@ function CollapsibleSection({
         aria-expanded={isOpen}
         style={{ color: 'var(--ink)' }}
       >
-        {Icon && <Icon className="w-5 h-5" style={{ color: 'var(--accent)' }} aria-hidden="true" />}
+        {IconComponent && (
+          <span style={{ color: 'var(--accent)' }} aria-hidden="true">
+            <IconComponent className="w-5 h-5" />
+          </span>
+        )}
         <Kicker size="sm" className="mb-0 flex-1">{title}</Kicker>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
@@ -394,7 +398,7 @@ export function MegaMenu({ data, triggerRef, isOpen, onClose, position }: MegaMe
             className={cn(
               'relative mx-auto rounded-[var(--radius-lg)] border border-[var(--border)]',
               'bg-[var(--paper)] shadow-[var(--shadow-xl)]',
-              'overflow-hidden',
+              'overflow-hidden animate-slide-down',
               'max-h-[calc(100vh-120px)] overflow-y-auto'
             )}
             style={{

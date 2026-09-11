@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { useState, FormEvent, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, MapPin, Phone, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ArrowRight } from 'lucide-react';
 import { Input, Textarea } from '@/components/ui/Input';
@@ -9,14 +10,29 @@ import { Kicker, Heading, Text } from '@/components/ui/Typography';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Section, Wrap, Band } from '@/components/ui/Grid';
 import { contactInfo } from '@/lib/site-content';
+import { cn } from '@/lib/utils';
+
+const formSteps = ['Details', 'Message', 'Submit'] as const;
 
 export function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Auto-calculate step based on filled fields
+  const calculatedStep = useMemo(() => {
+    let step = 1;
+    if (formData.name.trim() && formData.email.trim()) step = 2;
+    if (formData.name.trim() && formData.email.trim() && formData.message.trim()) step = 3;
+    return step;
+  }, [formData]);
+
+  useEffect(() => {
+    setCurrentStep(calculatedStep);
+  }, [calculatedStep]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, this would submit to an API
     console.log('Form submitted:', formData);
     setSubmitted(true);
     setFormData({ name: '', email: '', message: '' });
@@ -69,6 +85,42 @@ export function Contact() {
               <CardTitle>Send a Message</CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Goal Gradient: Progress Indicator */}
+              <div className="mb-6" role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label="Form progress">
+                <div className="flex items-center gap-2 mb-2">
+                  {formSteps.map((step, i) => (
+                    <> // React.Fragment
+                      <motion.div
+                        key={step}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: i * 0.1, type: 'spring', stiffness: 300, damping: 20 }}
+                        className={cn(
+                          'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300',
+                          i < currentStep ? 'bg-[var(--accent)] text-[var(--paper)]' : 
+                          i + 1 === currentStep ? 'bg-[var(--paper)] border-2 border-[var(--accent)] text-[var(--accent)]' :
+                          'bg-[var(--paper-alt)] border border-[var(--border)] text-[var(--ink-muted)]'
+                        )}
+                      >
+                        {i < currentStep - 1 ? <Check className="w-4 h-4" /> : i + 1}
+                      </motion.div>
+                      {i < formSteps.length - 1 && (
+                        <motion.div
+                          className={cn('flex-1 h-0.5 transition-colors duration-300', i < currentStep - 1 ? 'bg-[var(--accent)]' : 'bg-[var(--border)]')}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: i < currentStep - 1 ? 1 : 0 }}
+                          transition={{ delay: 0.3, duration: 0.4 }}
+                          style={{ transformOrigin: 'left' }}
+                        />
+                      )}
+                    </>
+                  ))}
+                </div>
+                <Text size="sm" color="muted" className="text-center">
+                  Step {currentStep} of {formSteps.length} — {formSteps[currentStep - 1]}
+                </Text>
+              </div>
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <Input
                   name="name"
