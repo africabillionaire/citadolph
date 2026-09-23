@@ -28,7 +28,7 @@ const navIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 
 type MobileMegaMenuData = {
   title: string;
-  columns: readonly { heading: string; items: readonly { label: string; href: string; description: string }[]; defaultExpanded?: boolean; icon?: React.ComponentType<{ className?: string }> }[];
+  columns: readonly { heading: string; items: readonly { label: string; href: string }[]; defaultExpanded?: boolean; icon?: React.ComponentType<{ className?: string }> }[];
   cta: { label: string; href: string };
   secondaryCta?: { label: string; href: string; variant: 'outline' | 'primary' | 'ghost' };
 };
@@ -318,7 +318,6 @@ export function MobileDrawer({ isOpen, onClose, authState = 'unauthenticated', o
                                       >
                                         <span className="font-medium text-sm">{subItem.label}</span>
                                         <span className="text-xs" style={{ color: 'var(--ink-muted)', lineHeight: '1.4' }}>
-                                          {subItem.description}
                                         </span>
                                       </Link>
                                     </motion.li>

@@ -1,204 +1,281 @@
-'use client';
+'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Menu, ChevronDown } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
-import { Kicker, Text } from '@/components/ui/Typography';
-import { navigation, siteConfig, megaMenus, type NavItem } from '@/lib/site-content';
-import { UtilityBar } from './UtilityBar';
-import { MegaMenu } from './MegaMenu';
-import { MobileDrawer } from './MobileDrawer';
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { motion } from 'framer-motion'
+import { ArrowRight, ChevronDown, Menu } from 'lucide-react'
+
+import { cn } from '@/lib/utils'
+import { navigation, siteConfig, megaMenus, type NavItem } from '@/lib/site-content'
+import { UtilityBar } from './UtilityBar'
+import { MegaMenu } from './MegaMenu'
+import { MobileDrawer } from './MobileDrawer'
+
+/* ------------------------------------------------------------------ */
+/* Constants (module scope — shared by component & helpers)           */
+/* ------------------------------------------------------------------ */
+
+const UTILITY_BAR_HEIGHT = 40 // px — matches UtilityBar
+const STORAGE_KEY = 'citadolph:openMegaMenu'
+
+/* ------------------------------------------------------------------ */
+/* Helper functions (module scope — used by callbacks)                */
+/* ------------------------------------------------------------------ */
+
+function openNow(key: string) {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('citadolph:openMegaMenu', key)
+  }
+}
+
+function closeNow() {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('citadolph:openMegaMenu')
+  }
+}
+
+function onTriggerKeyDown(e: React.KeyboardEvent, key: string) {
+  if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+  }
+  if (e.key === 'ArrowUp') {
+    // handled by component closure
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Component                                                           */
+/* ------------------------------------------------------------------ */
 
 interface HeaderProps {
-  onScrollTo?: (id: string) => void;
-  authState?: 'unauthenticated' | 'authenticated';
-  onAuthAction?: (action: 'login' | 'register' | 'signout') => void;
+  onScrollTo?: (id: string) => void
+  authState?: 'unauthenticated' | 'authenticated'
+  onAuthAction?: (action: 'login' | 'register' | 'signout') => void
 }
 
 export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction }: HeaderProps) {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [openMegaMenu, setOpenMegaMenu] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('citadolph:openMegaMenu');
-    }
-    return null;
-  });
-  const [hoveredMegaMenu, setHoveredMegaMenu] = useState<string | null>(null);
-  const megaMenuTriggerRefs = useRef<Record<string, React.RefObject<HTMLButtonElement | null>>>({});
-  const headerRef = useRef<HTMLElement>(null);
+  /* ------------------------------ state ---------------------------- */
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [openMenu, setOpenMenu] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return sessionStorage.getItem('citadolph:openMegaMenu')
+  })
 
+  const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  /* --------------------------- effects ----------------------------- */
+
+  /* Scroll elevation */
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
-  const handleNavClick = useCallback((href: string) => {
-    if (onScrollTo && href.startsWith('#') && href !== '#') {
-      onScrollTo(href.slice(1));
+  /* Body scroll-lock while drawer is open */
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
     }
-    setMobileDrawerOpen(false);
-    setOpenMegaMenu(null);
-  }, [onScrollTo]);
+  }, [mobileOpen])
 
-  const handleMegaMenuTrigger = (menuKey: string | null) => {
-    setOpenMegaMenu(menuKey);
-    if (menuKey) {
-      sessionStorage.setItem('citadolph:openMegaMenu', menuKey);
-    } else {
-      sessionStorage.removeItem('citadolph:openMegaMenu');
+  /* Global Escape: close megamenu first, then drawer */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (openMenu) {
+        sessionStorage.removeItem('citadolph:openMegaMenu')
+        setOpenMenu(null)
+      } else {
+        setMobileOpen(false)
+      }
     }
-  };
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [openMenu])
 
-  const handleMegaMenuHover = (menuKey: string | null) => {
-    setHoveredMegaMenu(menuKey);
-    if (menuKey) setOpenMegaMenu(menuKey);
-  };
+  /* --------------------------- megamenu ---------------------------- */
+  /* Click-only trigger — no hover intent */
 
-  const handleMegaMenuLeave = () => {
-    setHoveredMegaMenu(null);
-    setTimeout(() => {
-      if (!hoveredMegaMenu) setOpenMegaMenu(null);
-    }, 100);
-  };
+  const openNow = useCallback(
+    (key: string) => {
+      setOpenMenu(key)
+      sessionStorage.setItem('citadolph:openMegaMenu', key)
+    },
+    []
+  )
 
-  const currentMegaMenuKey = openMegaMenu || hoveredMegaMenu;
+  const closeNow = useCallback(() => {
+    setOpenMenu(null)
+    sessionStorage.removeItem('citadolph:openMegaMenu')
+  }, [])
 
+  const onTriggerKeyDown = (e: React.KeyboardEvent, key: string) => {
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      openMenu === key ? setOpenMenu(null) : setOpenMenu(key)
+    }
+    if (e.key === 'ArrowUp' && openMenu === key) {
+      setOpenMenu(null)
+    }
+  }
+
+  /* ----------------------------- nav ------------------------------- */
+
+  const handleNavClick = useCallback(
+    (href: string) => {
+      if (onScrollTo && href.startsWith('#') && href !== '#') onScrollTo(href.slice(1))
+      setMobileOpen(false)
+      setOpenMenu(null)
+      sessionStorage.removeItem('citadolph:openMegaMenu')
+    },
+    [onScrollTo]
+  )
+
+  /* ------------------------------ render --------------------------- */
   return (
     <>
-      <style jsx global>{`
-        @keyframes pulse-once {
-          0%, 100% { box-shadow: var(--shadow-accent); }
-          50% { box-shadow: 0 0 0 4px rgba(228, 0, 43, 0.3); }
-        }
-        .animate-pulse-once {
-          animation: pulse-once 2s ease-out 1s 1;
-        }
-      `}</style>
-
+      {/* Utility bar — pinned at very top on desktop */}
       <UtilityBar authState={authState} onAuthAction={onAuthAction} />
 
+      {/* Main header — fixed beneath utility bar, white background on scroll */}
       <header
-        ref={headerRef}
-        className={cn(
-          'fixed top-[40px] left-0 right-0 z-[var(--z-fixed)] transition-all duration-300',
-          'lg:top-0',
-          scrolled
-            ? 'bg-[var(--paper)]/95 backdrop-blur-sm border-b border-[var(--border)]'
-            : 'bg-transparent'
-        )}
-        style={{
-          background: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
-          transform: scrolled ? 'translateY(0)' : 'translateY(-40px)',
-        }}
         role="banner"
-        onMouseEnter={() => handleMegaMenuHover(currentMegaMenuKey)}
-        onMouseLeave={handleMegaMenuLeave}
+        className={cn(
+          'fixed inset-x-0 z-[var(--z-fixed)] backdrop-blur-sm transition-[background-color,border-color] duration-300',
+          'border-b border-[var(--border)] bg-[var(--paper)]/95',
+          scrolled && 'shadow-[var(--shadow-sm)]'
+        )}
+        style={{ top: 40 }}
       >
-        <nav
-          className="grid gap-[var(--gutter)] items-center"
-          style={{
-            gridTemplateColumns: 'subgrid',
-            height: '88px',
-          }}
-          aria-label="Main navigation"
+        <div
+          className={cn(
+            'mx-auto grid max-w-[1440px] grid-cols-12 items-center gap-[var(--gutter)] px-[var(--gutter)]',
+            'h-[88px]' // Fixed height — nav sits perfectly on white band
+          )}
         >
-          <div className="flex items-center gap-3" style={{ gridColumn: '1 / 4' }}>
-            <Link href="/" className="flex items-center gap-3" aria-label={`${siteConfig.name} Home`} onClick={() => { setMobileDrawerOpen(false); setOpenMegaMenu(null); }}>
+          {/* Logo — columns 1–3 (Müller-Brockmann: 3-column logo block) */}
+          <div className="col-span-3 flex items-center">
+            <Link
+              href="/"
+              aria-label={`${siteConfig.name} — home`}
+              className="rounded-[var(--radius-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+              onClick={() => {
+                setMobileOpen(false)
+                setOpenMenu(null)
+                sessionStorage.removeItem('citadolph:openMegaMenu')
+              }}
+            >
               <Image
                 src="/images/logo_full_black.svg"
                 alt={`${siteConfig.name} logo`}
                 width={160}
                 height={40}
                 priority
+                className="h-10 w-auto"
                 style={{ filter: 'var(--logo-filter, none)' }}
               />
             </Link>
           </div>
 
-          <div className="hidden lg:flex items-center justify-center gap-1" style={{ gridColumn: '4 / 11' }}>
-            {navigation.main.map((item: NavItem, index: number) => {
-              const hasMegaMenu = item.megaMenu && megaMenus[item.megaMenu as keyof typeof megaMenus];
-              const isLast = index === navigation.main.length - 1;
-              const isFirst = index === 0;
-              const position = isFirst ? 'left' : isLast ? 'right' : 'center';
+          {/* Primary navigation — columns 4–9 (6 columns, optically centered) */}
+          <nav
+            aria-label="Main navigation"
+            className="col-span-6 hidden items-center justify-center gap-2 lg:flex"
+          >
+            {navigation.main.map((item: NavItem) => {
+              const megaKey = item.megaMenu
+              const hasMega = !!megaKey && megaKey in megaMenus
+              const isOpen = openMenu === megaKey
+
+              if (!hasMega) {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => handleNavClick(item.href)}
+                    className={cn(
+                      'relative rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition-colors duration-200',
+                      'after:absolute after:bottom-0 after:left-1/2 after:w-0 after:h-[2px] after:bg-[var(--accent)] after:transition-all after:duration-300 after:-translate-x-1/2 hover:after:w-full',
+                      'text-[var(--ink-muted)] hover:text-[var(--ink)]',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2'
+                    )}
+                    onClick={() => handleNavClick(item.href)}
+                  >
+                    {item.label}
+                  </button>
+                )
+              }
 
               return (
                 <div
                   key={item.label}
                   className="relative"
-                  onMouseEnter={() => hasMegaMenu && handleMegaMenuHover(item.megaMenu!)}
-                  onMouseLeave={handleMegaMenuLeave}
+                  onMouseLeave={closeNow} // Close on mouse leave
                 >
                   <button
-                    ref={(el) => { if (hasMegaMenu) megaMenuTriggerRefs.current[item.megaMenu!] = { current: el }; }}
-                    className={cn(
-                      'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-[var(--radius-sm)]',
-                      'transition-all duration-150 ease-out',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2',
-                      hasMegaMenu
-                        ? 'hover:bg-[var(--paper-alt)]'
-                        : 'hover:text-[var(--accent)]'
-                    )}
-                    style={{
-                      color: openMegaMenu === item.megaMenu || hoveredMegaMenu === item.megaMenu
-                        ? 'var(--accent)'
-                        : 'var(--ink-muted)',
+                    ref={(el) => {
+                      triggerRefs.current[megaKey] = el
                     }}
+                    aria-expanded={openMenu === megaKey}
+                    aria-haspopup="dialog"
+                    aria-controls={`megamenu-${megaKey}`}
                     onClick={(e) => {
-                      e.preventDefault();
-                      if (hasMegaMenu) {
-                        handleMegaMenuTrigger(item.megaMenu!);
-                      } else {
-                        handleNavClick(item.href);
-                      }
+                      e.preventDefault()
+                      openMenu === megaKey ? setOpenMenu(null) : setOpenMenu(megaKey)
                     }}
-                    aria-expanded={openMegaMenu === item.megaMenu || hoveredMegaMenu === item.megaMenu}
-                    aria-haspopup={hasMegaMenu ? 'dialog' : undefined}
-                    aria-controls={hasMegaMenu ? `megamenu-${item.megaMenu}` : undefined}
+                    onKeyDown={(e) => onTriggerKeyDown(e, megaKey)}
+                    className={cn(
+                      'relative flex items-center gap-1.5 rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition-colors duration-200',
+                      'after:absolute after:bottom-0 after:left-1/2 after:w-0 after:h-[2px] after:bg-[var(--accent)] after:transition-all after:duration-300 after:-translate-x-1/2 hover:after:w-full',
+                      'text-[var(--ink-muted)] hover:text-[var(--ink)]',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2'
+                    )}
+                    style={{ color: openMenu === megaKey ? 'var(--accent)' : 'var(--ink-muted)' }}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      openMenu === megaKey ? setOpenMenu(null) : setOpenMenu(megaKey)
+                    }}
+                    onKeyDown={(e) => onTriggerKeyDown(e, megaKey)}
                   >
                     {item.label}
-                    {hasMegaMenu && (
-                      <ChevronDown
-                        className={cn('w-4 h-4 transition-transform', (openMegaMenu === item.megaMenu || hoveredMegaMenu === item.megaMenu) && 'rotate-180')}
-                        aria-hidden="true"
-                      />
-                    )}
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 transition-transform duration-200',
+                        openMenu === megaKey && 'rotate-180'
+                      )}
+                      aria-hidden="true"
+                    />
                   </button>
 
-                  {hasMegaMenu && (
-                    <MegaMenu
-                      data={megaMenus[item.megaMenu as keyof typeof megaMenus]}
-                      triggerRef={megaMenuTriggerRefs.current[item.megaMenu!] || { current: null }}
-                      isOpen={openMegaMenu === item.megaMenu || hoveredMegaMenu === item.megaMenu}
-                      onClose={() => { setOpenMegaMenu(null); setHoveredMegaMenu(null); }}
-                      position={position}
-                    />
-                  )}
+                  <MegaMenu
+                    data={megaMenus[megaKey as keyof typeof megaMenus]}
+                    triggerRef={{ current: triggerRefs.current[megaKey] ?? null }}
+                    isOpen={openMenu === megaKey}
+                    onClose={setOpenMenu}
+                    position="center"
+                  />
                 </div>
-              );
+              )
             })}
-          </div>
+          </nav>
 
-          <div className="flex items-center justify-end gap-3" style={{ gridColumn: '11 / 13' }}>
+          {/* Actions — columns 10–12, flush right with proper spacing */}
+          <div className="col-span-9 flex items-center justify-end gap-4 lg:col-span-3">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={cn(
-                'hidden lg:inline-flex',
-                'relative z-10',
-                'px-6 py-2.5',
-                'shadow-[var(--shadow-accent)]',
-                'hover:shadow-[0_8px_32px_rgba(228,0,43,0.4)]',
-                'transition-all duration-200',
-                'animate-pulse-once'
-              )}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => handleNavClick(navigation.cta.href)}
+              className={cn(
+                'group hidden items-center gap-2 px-6 py-2.5 lg:inline-flex',
+                'shadow-[var(--shadow-accent)] transition-shadow duration-200',
+                'hover:shadow-[0_8px_32px_rgba(228,0,43,0.4)]',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2'
+              )}
               style={{
                 background: 'var(--accent)',
                 color: 'var(--paper)',
@@ -207,40 +284,47 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
                 font: '600 13px/1 var(--font-sans)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.02em',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
               }}
             >
               {navigation.cta.label}
-              <motion.span
-                animate={{ x: [0, 4, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                →
-              </motion.span>
+              <ArrowRight
+                className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
             </motion.button>
+
+            {/* Mobile trigger */}
             <button
-              className="lg:hidden p-2 rounded-lg transition-colors"
-              style={{ background: 'var(--paper-alt)' }}
-              onClick={() => setMobileDrawerOpen(true)}
-              aria-expanded={mobileDrawerOpen}
+              onClick={() => setMobileOpen(true)}
+              aria-expanded={mobileOpen}
               aria-controls="mobile-drawer"
               aria-label="Open menu"
+              className={cn(
+                'flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg transition-colors lg:hidden',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]'
+              )}
+              style={{ background: 'var(--paper-alt)', color: 'var(--ink)' }}
             >
-              <Menu className="w-6 h-6" style={{ color: 'var(--ink)' }} />
+              <Menu className="h-6 w-6" strokeWidth={1.5} />
             </button>
           </div>
-        </nav>
+        </div>
       </header>
 
       <MobileDrawer
-        isOpen={mobileDrawerOpen}
-        onClose={() => setMobileDrawerOpen(false)}
+        isOpen={mobileOpen}
+        onClose={() => setMobileOpen(false)}
         authState={authState}
         onAuthAction={onAuthAction}
         onScrollTo={onScrollTo}
       />
     </>
-  );
+  )
 }
+
+/* ------------------------------------------------------------------ */
+/* Helpers (module scope)                                             */
+/* ------------------------------------------------------------------ */
+
+const triggerRefs = { current: {} as Record<string, HTMLButtonElement | null> }

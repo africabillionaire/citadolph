@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ChevronRight, ExternalLink, Briefcase, Lightbulb, Users, GraduationCap, Building2, Heart, MapPin, Clock, Search, ChevronDown, ChevronUp, Users as UsersIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -13,7 +12,6 @@ import { megaMenus } from '@/lib/site-content';
 interface MegaMenuItem {
   label: string;
   href: string;
-  description: string;
 }
 
 interface MegaMenuColumn {
@@ -48,6 +46,8 @@ const columnIcons: Record<string, React.ComponentType<{ className?: string }>> =
   'Open Roles': Briefcase,
   'Why Join Us': Heart,
   'Life at Citadolph': Users,
+  'Find a Job': Briefcase,
+  'How We Hire': Users,
 };
 
 const menuVariants = {
@@ -156,7 +156,7 @@ function MegaMenuSkeleton() {
           <div className="h-5 w-3/4 rounded bg-[var(--border)] animate-pulse" />
           <ul className="space-y-3 flex-1">
             {[1,2,3,4].map(j => (
-              <li key={j} className="h-12 rounded-[var(--radius-sm)] bg-[var(--border)] animate-pulse" />
+              <li key={j} className="h-10 rounded-[var(--radius-sm)] bg-[var(--border)] animate-pulse" />
             ))}
           </ul>
         </div>
@@ -182,8 +182,7 @@ function MegaMenuContent({ data, onClose }: { data: MegaMenuData; onClose: () =>
     return data.columns.map(col => ({
       ...col,
       items: col.items.filter(item => 
-        item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+        item.label.toLowerCase().includes(searchQuery.toLowerCase())
       )
     })).filter(col => col.items.length > 0);
   }, [data.columns, searchQuery]);
@@ -196,7 +195,7 @@ function MegaMenuContent({ data, onClose }: { data: MegaMenuData; onClose: () =>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
           <input
             type="search"
-            placeholder="Search services, roles, insights..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--paper)] text-[var(--ink)] placeholder:text-[var(--ink-muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
@@ -222,7 +221,7 @@ function MegaMenuContent({ data, onClose }: { data: MegaMenuData; onClose: () =>
             itemCount={column.items.length}
           >
             <ul className="space-y-2" role="list">
-              {column.items.slice(0, 3).map((item, itemIndex) => (
+              {column.items.slice(0, 4).map((item, itemIndex) => (
                 <motion.li
                   key={item.label}
                   variants={itemVariants}
@@ -233,7 +232,7 @@ function MegaMenuContent({ data, onClose }: { data: MegaMenuData; onClose: () =>
                 >
                   <Link
                     href={item.href}
-                    className="group flex flex-col gap-1 p-3 rounded-[var(--radius-sm)] transition-all duration-150"
+                    className="group flex py-2.5 px-3 rounded-[var(--radius-sm)] transition-all duration-150"
                     style={{
                       background: 'transparent',
                       border: '1px solid transparent',
@@ -252,13 +251,10 @@ function MegaMenuContent({ data, onClose }: { data: MegaMenuData; onClose: () =>
                       {item.label}
                       <ChevronRight className="inline-block w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                     </span>
-                    <span className="text-xs" style={{ color: 'var(--ink-muted)', lineHeight: '1.5' }}>
-                      {item.description}
-                    </span>
                   </Link>
                 </motion.li>
               ))}
-              {column.items.length > 3 && (
+              {column.items.length > 4 && (
                 <motion.li
                   initial="hidden"
                   animate="visible"
@@ -399,12 +395,12 @@ export function MegaMenu({ data, triggerRef, isOpen, onClose, position }: MegaMe
               'relative mx-auto rounded-[var(--radius-lg)] border border-[var(--border)]',
               'bg-[var(--paper)] shadow-[var(--shadow-xl)]',
               'overflow-hidden animate-slide-down',
-              'max-h-[calc(100vh-120px)] overflow-y-auto'
+              'max-h-[calc(100vh-140px)] overflow-y-auto'
             )}
             style={{
               maxWidth: 'var(--maxw)',
               width: 'calc(100% - var(--margin) * 2)',
-              ...positionStyles[position],
+              ...positionStyles.center, // Always center-aligned
             }}
             onClick={(e) => e.stopPropagation()}
           >
