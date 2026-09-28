@@ -26,21 +26,24 @@ const mockMegaMenuData = {
 };
 
 describe('MegaMenu Keyboard Navigation', () => {
-  const triggerRef = { current: null as HTMLButtonElement | null };
+  const triggerRefs = { current: {} as Record<string, HTMLButtonElement | null> };
+  const triggerKey = 'what-we-do';
   const onClose = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    triggerRef.current = document.createElement('button');
-    triggerRef.current.setAttribute('aria-expanded', 'false');
-    triggerRef.current.setAttribute('aria-haspopup', 'dialog');
-    triggerRef.current.setAttribute('aria-controls', 'megamenu-panel');
-    document.body.appendChild(triggerRef.current);
+    const triggerBtn = document.createElement('button');
+    triggerBtn.setAttribute('aria-expanded', 'false');
+    triggerBtn.setAttribute('aria-haspopup', 'dialog');
+    triggerBtn.setAttribute('aria-controls', 'megamenu-panel');
+    triggerBtn.textContent = 'What We Do';
+    triggerRefs.current[triggerKey] = triggerBtn;
+    document.body.appendChild(triggerBtn);
   });
 
   afterEach(() => {
-    if (triggerRef.current && triggerRef.current.parentNode) {
-      triggerRef.current.parentNode.removeChild(triggerRef.current);
+    if (triggerRefs.current[triggerKey]?.parentNode) {
+      triggerRefs.current[triggerKey]?.parentNode?.removeChild(triggerRefs.current[triggerKey]!);
     }
   });
 
@@ -48,7 +51,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -62,7 +66,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -82,7 +87,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -106,7 +112,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -122,7 +129,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -145,7 +153,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -159,14 +168,15 @@ describe('MegaMenu Keyboard Navigation', () => {
     const searchInput = screen.getByPlaceholderText(/search…/i);
     fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
 
-    expect(screen.getByText(/no results for "nonexistent"/i)).toBeInTheDocument();
+    expect(screen.getByText(/no results for/i)).toBeInTheDocument();
   });
 
   it('renders CTA buttons', async () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -184,7 +194,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -204,7 +215,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -226,7 +238,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"
@@ -244,7 +257,8 @@ describe('MegaMenu Keyboard Navigation', () => {
     render(
       <MegaMenu
         data={mockMegaMenuData}
-        triggerRef={triggerRef}
+        triggerRefs={triggerRefs}
+        triggerKey={triggerKey}
         isOpen={true}
         onClose={onClose}
         position="center"

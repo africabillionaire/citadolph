@@ -75,9 +75,13 @@ vi.mock('motion/react', () => ({
 
 // Mock lucide-react icons
 vi.mock('lucide-react', () => {
-  const createIcon = (name: string) => (props: React.SVGProps<SVGSVGElement>) => (
-    <svg data-testid={`icon-${name}`} {...props} />
-  );
+  const createIcon = (name: string) => {
+    const Icon = (props: React.SVGProps<SVGSVGElement>) => (
+      <svg data-testid={`icon-${name}`} {...props} />
+    );
+    Icon.displayName = `Mock${name.charAt(0).toUpperCase() + name.slice(1)}`;
+    return Icon;
+  };
   return {
     ArrowRight: createIcon('arrow-right'),
     ChevronDown: createIcon('chevron-down'),

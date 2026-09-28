@@ -13,36 +13,10 @@ import { MegaMenu } from './MegaMenu'
 import { MobileDrawer } from './MobileDrawer'
 
 /* ------------------------------------------------------------------ */
-/* Constants (module scope — shared by component & helpers)           */
+/* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-const UTILITY_BAR_HEIGHT = 40 // px — matches UtilityBar
 const STORAGE_KEY = 'citadolph:openMegaMenu'
-
-/* ------------------------------------------------------------------ */
-/* Helper functions (module scope — used by callbacks)                */
-/* ------------------------------------------------------------------ */
-
-function openNow(key: string) {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem('citadolph:openMegaMenu', key)
-  }
-}
-
-function closeNow() {
-  if (typeof window !== 'undefined') {
-    sessionStorage.removeItem('citadolph:openMegaMenu')
-  }
-}
-
-function onTriggerKeyDown(e: React.KeyboardEvent, key: string) {
-  if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault()
-  }
-  if (e.key === 'ArrowUp') {
-    // handled by component closure
-  }
-}
 
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
@@ -60,10 +34,26 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openMenu, setOpenMenu] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
-    return sessionStorage.getItem('citadolph:openMegaMenu')
+    return sessionStorage.getItem(STORAGE_KEY)
   })
 
   const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  /* --------------------------- megamenu ---------------------------- */
+
+  const closeMega = useCallback(() => {
+    setOpenMenu(null)
+    sessionStorage.removeItem(STORAGE_KEY)
+  }, [])
+
+  const toggleMega = useCallback((key: string) => {
+    setOpenMenu((prev) => {
+      const next = prev === key ? null : key
+      if (next) sessionStorage.setItem(STORAGE_KEY, key)
+      else sessionStorage.removeItem(STORAGE_KEY)
+      return next
+    })
+  }, [])
 
   /* --------------------------- effects ----------------------------- */
 
@@ -88,39 +78,22 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       if (openMenu) {
-        sessionStorage.removeItem('citadolph:openMegaMenu')
-        setOpenMenu(null)
+        closeMega()
       } else {
         setMobileOpen(false)
       }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [openMenu])
-
-  /* --------------------------- megamenu ---------------------------- */
-  /* Click-only trigger — no hover intent */
-
-  const openNow = useCallback(
-    (key: string) => {
-      setOpenMenu(key)
-      sessionStorage.setItem('citadolph:openMegaMenu', key)
-    },
-    []
-  )
-
-  const closeNow = useCallback(() => {
-    setOpenMenu(null)
-    sessionStorage.removeItem('citadolph:openMegaMenu')
-  }, [])
+  }, [openMenu, closeMega])
 
   const onTriggerKeyDown = (e: React.KeyboardEvent, key: string) => {
-    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
       e.preventDefault()
-      openMenu === key ? setOpenMenu(null) : setOpenMenu(key)
-    }
-    if (e.key === 'ArrowUp' && openMenu === key) {
-      setOpenMenu(null)
+      toggleMega(key)
+    } else if (e.key === 'ArrowUp' && openMenu === key) {
+      e.preventDefault()
+      closeMega()
     }
   }
 
@@ -130,35 +103,29 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
     (href: string) => {
       if (onScrollTo && href.startsWith('#') && href !== '#') onScrollTo(href.slice(1))
       setMobileOpen(false)
-      setOpenMenu(null)
-      sessionStorage.removeItem('citadolph:openMegaMenu')
+      closeMega()
     },
-    [onScrollTo]
+    [onScrollTo, closeMega]
   )
 
   /* ------------------------------ render --------------------------- */
   return (
-    <>
-      {/* Utility bar — pinned at very top on desktop */}
+    /* Sticky wrapper: no fixed-position magic numbers, no content overlap.
+       Utility bar scrolls away naturally; header pins to the top. */
+    <div className="sticky top-0 z-[var(--z-fixed)]">
       <UtilityBar authState={authState} onAuthAction={onAuthAction} />
 
-      {/* Main header — fixed beneath utility bar, white background on scroll */}
       <header
         role="banner"
         className={cn(
-          'fixed inset-x-0 z-[var(--z-fixed)] backdrop-blur-sm transition-[background-color,border-color] duration-300',
-          'border-b border-[var(--border)] bg-[var(--paper)]/95',
+          'relative border-b border-[var(--border)] bg-[var(--paper)]/95 backdrop-blur-sm',
+          'transition-[box-shadow] duration-300',
           scrolled && 'shadow-[var(--shadow-sm)]'
         )}
-        style={{ top: 40 }}
       >
-        <div
-          className={cn(
-            'mx-auto grid max-w-[1440px] grid-cols-12 items-center gap-[var(--gutter)] px-[var(--gutter)]',
-            'h-[88px]' // Fixed height — nav sits perfectly on white band
-          )}
-        >
-          {/* Logo — columns 1–3 (Müller-Brockmann: 3-column logo block) */}
+        {/* Müller-Brockmann 12-column grid, 88px band */}
+        <div className="mx-auto grid h-[88px] max-w-[1440px] grid-cols-12 items-center gap-[var(--gutter)] px-[var(--gutter)]">
+          {/* Logo — columns 1–3 */}
           <div className="col-span-3 flex items-center">
             <Link
               href="/"
@@ -166,12 +133,11 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
               className="rounded-[var(--radius-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
               onClick={() => {
                 setMobileOpen(false)
-                setOpenMenu(null)
-                sessionStorage.removeItem('citadolph:openMegaMenu')
+                closeMega()
               }}
             >
               <Image
-                src="/images/logo_full_black.svg"
+                src="/images/logo_full_white.svg"
                 alt={`${siteConfig.name} logo`}
                 width={160}
                 height={40}
@@ -182,7 +148,7 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
             </Link>
           </div>
 
-          {/* Primary navigation — columns 4–9 (6 columns, optically centered) */}
+          {/* Primary navigation — columns 4–9 */}
           <nav
             aria-label="Main navigation"
             className="col-span-6 hidden items-center justify-center gap-2 lg:flex"
@@ -196,16 +162,19 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
                 return (
                   <button
                     key={item.label}
+                    type="button"
                     onClick={() => handleNavClick(item.href)}
                     className={cn(
-                      'relative rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition-colors duration-200',
-                      'after:absolute after:bottom-0 after:left-1/2 after:w-0 after:h-[2px] after:bg-[var(--accent)] after:transition-all after:duration-300 after:-translate-x-1/2 hover:after:w-full',
-                      'text-[var(--ink-muted)] hover:text-[var(--ink)]',
+                      'group relative rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium text-[var(--ink)]',
+                      'opacity-70 hover:opacity-100 transition-opacity duration-200',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2'
                     )}
-                    onClick={() => handleNavClick(item.href)}
                   >
-                    {item.label}
+                    <span className="relative inline-block transition-transform duration-200 group-hover:scale-105">
+                      {item.label}
+                      {/* Underline constrained strictly to the text width */}
+                      <span className="absolute bottom-0 left-0 h-[1px] w-0 bg-[var(--accent)] transition-all duration-300 group-hover:w-full" />
+                    </span>
                   </button>
                 )
               }
@@ -214,38 +183,34 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
                 <div
                   key={item.label}
                   className="relative"
-                  onMouseLeave={closeNow} // Close on mouse leave
+                  onMouseLeave={closeMega}
                 >
                   <button
                     ref={(el) => {
                       triggerRefs.current[megaKey] = el
                     }}
-                    aria-expanded={openMenu === megaKey}
+                    type="button"
+                    aria-expanded={isOpen}
                     aria-haspopup="dialog"
                     aria-controls={`megamenu-${megaKey}`}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      openMenu === megaKey ? setOpenMenu(null) : setOpenMenu(megaKey)
-                    }}
+                    onClick={() => toggleMega(megaKey)}
                     onKeyDown={(e) => onTriggerKeyDown(e, megaKey)}
                     className={cn(
-                      'relative flex items-center gap-1.5 rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition-colors duration-200',
-                      'after:absolute after:bottom-0 after:left-1/2 after:w-0 after:h-[2px] after:bg-[var(--accent)] after:transition-all after:duration-300 after:-translate-x-1/2 hover:after:w-full',
-                      'text-[var(--ink-muted)] hover:text-[var(--ink)]',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2'
+                      'group relative flex items-center gap-1.5 rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium text-[var(--ink)]',
+                      'transition-opacity duration-200',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2',
+                      isOpen ? 'opacity-100 text-[var(--accent)]' : 'opacity-70 hover:opacity-100'
                     )}
-                    style={{ color: openMenu === megaKey ? 'var(--accent)' : 'var(--ink-muted)' }}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      openMenu === megaKey ? setOpenMenu(null) : setOpenMenu(megaKey)
-                    }}
-                    onKeyDown={(e) => onTriggerKeyDown(e, megaKey)}
                   >
-                    {item.label}
+                    <span className="relative inline-block transition-transform duration-200 group-hover:scale-105">
+                      {item.label}
+                      {/* Underline constrained strictly to the text width */}
+                      <span className="absolute bottom-0 left-0 h-[1px] w-0 bg-[var(--accent)] transition-all duration-300 group-hover:w-full" />
+                    </span>
                     <ChevronDown
                       className={cn(
                         'h-4 w-4 transition-transform duration-200',
-                        openMenu === megaKey && 'rotate-180'
+                        isOpen && 'rotate-180'
                       )}
                       aria-hidden="true"
                     />
@@ -253,9 +218,10 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
 
                   <MegaMenu
                     data={megaMenus[megaKey as keyof typeof megaMenus]}
-                    triggerRef={{ current: triggerRefs.current[megaKey] ?? null }}
-                    isOpen={openMenu === megaKey}
-                    onClose={setOpenMenu}
+                    triggerRefs={triggerRefs}
+                    triggerKey={megaKey}
+                    isOpen={isOpen}
+                    onClose={closeMega}
                     position="center"
                   />
                 </div>
@@ -263,9 +229,10 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
             })}
           </nav>
 
-          {/* Actions — columns 10–12, flush right with proper spacing */}
+          {/* Actions — columns 10–12, flush right */}
           <div className="col-span-9 flex items-center justify-end gap-4 lg:col-span-3">
             <motion.button
+              type="button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -296,6 +263,7 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
 
             {/* Mobile trigger */}
             <button
+              type="button"
               onClick={() => setMobileOpen(true)}
               aria-expanded={mobileOpen}
               aria-controls="mobile-drawer"
@@ -319,12 +287,6 @@ export function Header({ onScrollTo, authState = 'unauthenticated', onAuthAction
         onAuthAction={onAuthAction}
         onScrollTo={onScrollTo}
       />
-    </>
+    </div>
   )
 }
-
-/* ------------------------------------------------------------------ */
-/* Helpers (module scope)                                             */
-/* ------------------------------------------------------------------ */
-
-const triggerRefs = { current: {} as Record<string, HTMLButtonElement | null> }

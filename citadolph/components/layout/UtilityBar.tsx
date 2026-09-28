@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Globe, User, LogOut, Menu, Sparkles } from 'lucide-react';
+import { ChevronDown, Globe, User, LogOut, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import { Kicker, Text } from '@/components/ui/Typography';
+import { Kicker } from '@/components/ui/Typography';
 import { authLinks, type AuthState } from '@/lib/site-content';
 
 interface UtilityBarProps {
@@ -130,9 +130,12 @@ export function UtilityBar({ authState = 'unauthenticated', onAuthAction }: Util
                   className="absolute top-full left-0 mt-1 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--paper)] shadow-[var(--shadow-lg)] overflow-hidden"
                   role="listbox"
                 >
-                  {languages.map((lang) => (
-                    <button
+                  {languages.map((lang, index) => (
+                    <motion.button
                       key={lang.code}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[var(--paper-alt)]"
                       role="option"
                       aria-selected={lang.code === 'EN'}
@@ -141,7 +144,7 @@ export function UtilityBar({ authState = 'unauthenticated', onAuthAction }: Util
                       <span className="text-base">{lang.flag}</span>
                       <span className="font-medium text-sm" style={{ color: 'var(--ink)' }}>{lang.code}</span>
                       <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>{lang.label}</span>
-                    </button>
+                    </motion.button>
                   ))}
                 </motion.div>
               )}
@@ -175,28 +178,31 @@ export function UtilityBar({ authState = 'unauthenticated', onAuthAction }: Util
                   role="listbox"
                 >
                   {currentLinks.map((link, index) => (
-                    <motion.div
+                    <motion.button
+                      key={link.label}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
+                      className={
+        `w-full justify-start px-3 py-2 text-sm gap-2 
+        ${link.variant === 'primary' 
+          ? 'bg-[var(--accent)] text-[var(--paper)] border-2 border-[var(--accent)] hover:bg-[var(--accent-hover)] hover:border-[var(--accent-hover)]'
+          : link.variant === 'outline'
+          ? 'bg-transparent text-[var(--ink)] border-2 border-[var(--ink)] hover:bg-[var(--ink)] hover:text-[var(--paper)]'
+          : 'bg-transparent text-[var(--ink)] border-2 border-transparent hover:bg-[var(--paper-alt)]'}
+        `}
+                      onClick={() => {
+                        setAuthOpen(false);
+                        if ('action' in link && link.action === 'signout') onAuthAction?.('signout');
+                        else if (link.label === 'Login') onAuthAction?.('login');
+                        else if (link.label === 'Register') onAuthAction?.('register');
+                      }}
+                      role="option"
                     >
-                      <Button
-                        key={link.label}
-                        variant={link.variant}
-                        className="w-full justify-start px-3 py-2 text-sm gap-2"
-                        onClick={() => {
-                          setAuthOpen(false);
-                          if ('action' in link && link.action === 'signout') onAuthAction?.('signout');
-                          else if (link.label === 'Login') onAuthAction?.('login');
-                          else if (link.label === 'Register') onAuthAction?.('register');
-                        }}
-                        role="option"
-                      >
-                        {link.label === 'Sign Out' && <LogOut className="w-4 h-4" aria-hidden="true" />}
-                        {link.label === 'Dashboard' && <Menu className="w-4 h-4" aria-hidden="true" />}
-                        {link.label}
-                      </Button>
-                    </motion.div>
+                      {link.label === 'Sign Out' && <LogOut className="w-4 h-4" aria-hidden="true" />}
+                      {link.label === 'Dashboard' && <Menu className="w-4 h-4" aria-hidden="true" />}
+                      {link.label}
+                    </motion.button>
                   ))}
                 </motion.div>
               )}
