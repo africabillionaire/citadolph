@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://citadolph.com
+
+# Sitemaps
+Sitemap: https://citadolph.com/sitemap.xml
