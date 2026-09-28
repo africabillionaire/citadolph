@@ -252,10 +252,10 @@ export function MobileDrawer({ isOpen, onClose, authState = 'unauthenticated', o
                   transition={{ delay: 0.4, duration: 0.6, repeat: Infinity, repeatDelay: 4 }}
                 >
                   <Image
-                    src="/images/logo_full_black.svg"
+                    src="/images/logo_full_white.svg"
                     alt="Citadolph Logo"
-                    width={120}
-                    height={32}
+                    width={180}
+                    height={48}
                     priority
                   />
                 </motion.div>
