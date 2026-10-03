@@ -1,0 +1,70 @@
+{
+  "name": "payload-cms",
+  "version": "1.0.0",
+  "description": "Payload CMS with Neon PostgreSQL - Production Ready",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc && tsc-alias",
+    "payload:build": "payload build",
+    "payload:dev": "payload dev",
+    "start": "node dist/server.js",
+    "payload": "payload",
+    "payload:generate": "payload generate:types",
+    "payload:migrate": "payload migrate",
+    "payload:migrate:create": "payload migrate:create",
+    "db:push": "payload db:push",
+    "db:studio": "payload db:studio",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:seed": "tsx src/scripts/seed.ts"
+  },
+  "keywords": [
+    "payload",
+    "cms",
+    "postgres",
+    "neon",
+    "headless-cms"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@payloadcms/db-postgres": "^3.90.2",
+    "@payloadcms/plugin-seo": "^3.90.2",
+    "@payloadcms/richtext-lexical": "^3.90.2",
+    "@payloadcms/translations": "^3.90.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "graphql": "^16.9.0",
+    "graphql-http": "^1.22.1",
+    "graphql-scalars": "^1.23.0",
+    "payload": "^3.90.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.33.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.29.1",
+    "nodemon": "^3.1.4",
+    "tsc-alias": "^1.8.10",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.8.1"
+}

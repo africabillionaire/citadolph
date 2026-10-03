@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: payload-postgres
+    environment:
+      POSTGRES_DB: payload
+      POSTGRES_USER: payload
+      POSTGRES_PASSWORD: payload
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payload -d payload"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  payload:
+    build:
+      context: .
+      target: builder
+    container_name: payload-cms
+    environment:
+      - NODE_ENV=development
+      - PAYLOAD_SECRET=your-super-secret-key-change-this-in-production-min-32-chars
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+      - FRONTEND_URL=http://localhost:3000
+      - PORT=3001
+      - DATABASE_URL=postgresql://payload:payload@postgres:5432/payload?schema=public
+      - DATABASE_URL_POOLED=postgresql://payload:payload@postgres:5432/payload?schema=public
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./payload.config.ts:/app/payload.config.ts
+      - ./media:/app/media
+      - ./payload-types.ts:/app/payload-types.ts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: pnpm run dev
+
+volumes:
+  postgres_data:

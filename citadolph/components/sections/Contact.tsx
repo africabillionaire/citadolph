@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, MapPin, Phone, Check, Save, RotateCcw, AlertCircle, TrendingUp } from 'lucide-react';
+import { Mail, MapPin, Phone, Check, Save, RotateCcw, AlertCircle, TrendingUp, Sparkles, Users as UsersIcon, BarChart3, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { ArrowRight } from 'lucide-react';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Kicker, Heading, Text, Badge } from '@/components/ui/Typography';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -14,6 +13,52 @@ import { cn } from '@/lib/utils';
 
 const formSteps = ['Details', 'Message', 'Submit'] as const;
 const STORAGE_KEY = 'citadolph:contact-draft';
+
+/* Intent detection keywords — routes to correct department automatically */
+const INTENT_KEYWORDS: Record<string, string[]> = {
+  general: ['hello', 'hi', 'inquiry', 'question', 'info', 'information', 'general'],
+  sales: ['project', 'build', 'develop', 'create', 'website', 'app', 'erp', 'system', 'quote', 'proposal', 'pricing', 'cost', 'budget', 'start'],
+  partnerships: ['partner', 'partnership', 'collaborate', 'agency', 'network', 'affiliate', 'reseller', 'white label'],
+  legal: ['legal', 'contract', 'compliance', 'gdpr', 'privacy', 'terms', 'law', 'regulation', 'audit', 'iso', 'soc'],
+  hr: ['job', 'career', 'hiring', 'recruit', 'position', 'role', 'employment', 'work', 'join', 'talent'],
+  finance: ['invoice', 'payment', 'billing', 'finance', 'accounting', 'tax', 'financial'],
+  marketing: ['marketing', 'seo', 'ads', 'campaign', 'social', 'content', 'brand', 'growth'],
+};
+
+function detectIntent(message: string): string {
+  const lower = message.toLowerCase();
+  let bestMatch = 'general';
+  let maxMatches = 0;
+  
+  for (const [dept, keywords] of Object.entries(INTENT_KEYWORDS)) {
+    const matches = keywords.filter(k => lower.includes(k)).length;
+    if (matches > maxMatches) {
+      maxMatches = matches;
+      bestMatch = dept;
+    }
+  }
+  return bestMatch;
+}
+
+const DEPT_LABELS: Record<string, string> = {
+  general: 'General Inquiries',
+  sales: 'New Projects & Sales',
+  partnerships: 'Partnerships & Agency Network',
+  legal: 'Legal & Compliance',
+  hr: 'Careers & HR',
+  finance: 'Finance & Billing',
+  marketing: 'Marketing & Growth',
+};
+
+const DEPT_ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties; 'aria-hidden'?: boolean | 'true' | 'false' }>> = {
+  general: Mail,
+  sales: Sparkles,
+  partnerships: UsersIcon,
+  legal: AlertCircle,
+  hr: MapPin,
+  finance: TrendingUp,
+  marketing: BarChart3,
+};
 
 export function Contact() {
   const [formData, setFormData] = useState<{ name: string; email: string; message: string }>(() => {
@@ -33,6 +78,19 @@ export function Contact() {
   const [draftSaved, setDraftSaved] = useState(false);
   const [showDraftNotice, setShowDraftNotice] = useState(false);
 
+  // Auto-detect intent from message (computed during render - no effect needed)
+  const detectedIntent = useMemo(
+    () => (formData.message.trim() ? detectIntent(formData.message) : 'general') as
+      | 'general'
+      | 'sales'
+      | 'partnerships'
+      | 'legal'
+      | 'hr'
+      | 'finance'
+      | 'marketing',
+    [formData.message]
+  );
+
   // Auto-save draft to localStorage (Zeigarnik Effect)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -40,7 +98,7 @@ export function Contact() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
         setDraftSaved(true);
         setShowDraftNotice(true);
-        setTimeout(() => setShowDraftNotice(false), 2000);
+        setTimeout(() => setShowDraftNotice(false), 3000);
       }
     }, 1000);
     return () => clearTimeout(timer);
@@ -56,12 +114,12 @@ export function Contact() {
 
   const handleSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    console.log('Form submitted:', { ...formData, intent: detectedIntent });
     setSubmitted(true);
     localStorage.removeItem(STORAGE_KEY);
     setFormData({ name: '', email: '', message: '' });
     setTimeout(() => setSubmitted(false), 3000);
-  }, [formData]);
+  }, [formData, detectedIntent]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -73,6 +131,9 @@ export function Contact() {
     setDraftSaved(false);
   }, []);
 
+  // Honeypot for spam prevention
+  const [honeypot, setHoneypot] = useState('');
+
   return (
     <Section id="contact" variant="default" ariaLabel="contact-title">
       <Wrap>
@@ -83,7 +144,7 @@ export function Contact() {
           </Heading>
           <Text className="mb-[calc(var(--lh)*3)]" maxWidth="prose" style={{ lineHeight: 'var(--lh)' }}>
             Tell us about your project, your challenges, or your vision.
-            We&apos;ll respond within working hours with a clear next step.
+            We&apos;ll route your message to the right team automatically — no need to pick a department.
           </Text>
 
           {/* Reciprocity: Free value offer before form */}
@@ -130,9 +191,9 @@ export function Contact() {
             </div>
           </motion.div>
 
-          {/* Contact Info - using subgrid Bands */}
+          {/* Contact Info — Clean, minimal */}
           <Band span="1 / 13" style={{ gridTemplateRows: 'auto', rowGap: 'calc(var(--lh)*1.5)' }}>
-            {contactInfo.map((item) => (
+            {contactInfo.slice(0, 4).map((item) => ( // Only show primary contacts
               <Band key={item.label} span="1 / 13" style={{ gridTemplateColumns: 'auto 1fr', columnGap: 'var(--gutter)' }}>
                 <dt style={{ font: '600 11px/1 var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accent)', marginBottom: 'calc(var(--bl) * 0.5)', lineHeight: 'var(--lh)' }}>
                   {item.label}
@@ -159,23 +220,30 @@ export function Contact() {
             <CardHeader>
               <div className="flex items-center justify-between" style={{ lineHeight: 'var(--lh)' }}>
                 <CardTitle>Send a Message</CardTitle>
-                {/* Draft indicator (Zeigarnik) */}
-                {draftSaved && (
-                  <Badge variant="outline" size="sm" className="flex items-center gap-1" style={{ lineHeight: 'var(--lh)' }}>
-                    <Save className="w-3 h-3" aria-hidden="true" />
-                    Draft saved
-                  </Badge>
-                )}
+                {/* Intent indicator — shows auto-routing */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2 px-3 py-1 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-[var(--radius-sm)]"
+                  style={{ lineHeight: 'var(--lh)' }}
+                >
+                  {(() => {
+                    const Icon = DEPT_ICONS[detectedIntent];
+                    return <Icon className="w-4 h-4" style={{ color: 'var(--accent)' }} aria-hidden="true" />;
+                  })()}
+                  <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+                    → {DEPT_LABELS[detectedIntent]}
+                  </span>
+                </motion.div>
               </div>
             </CardHeader>
             <CardContent>
-              {/* Goal Gradient: Progress Indicator */}
+              {/* Goal Gradient: Progress Indicator — baseline aligned */}
               <div className="mb-[calc(var(--lh)*3)]" role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label="Form progress" style={{ lineHeight: 'var(--lh)' }}>
                 <div className="flex items-center gap-2 mb-[var(--lh)]">
                   {formSteps.map((step, i) => (
-                    <> {/* React.Fragment */}
+                    <React.Fragment key={step}>
                       <motion.div
-                        key={step}
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: i * 0.1, type: 'spring', stiffness: 300, damping: 20 }}
@@ -197,7 +265,7 @@ export function Contact() {
                           style={{ transformOrigin: 'left' }}
                         />
                       )}
-                    </>
+                    </React.Fragment>
                   ))}
                 </div>
                 <Text size="sm" color="muted" className="text-center" style={{ lineHeight: 'var(--lh)' }}>
@@ -205,7 +273,7 @@ export function Contact() {
                 </Text>
               </div>
 
-              {/* Draft notice toast */}
+              {/* Draft notice toast (Zeigarnik) */}
               <AnimatePresence>
                 {showDraftNotice && (
                   <motion.div
@@ -231,6 +299,19 @@ export function Contact() {
               </AnimatePresence>
 
               <form onSubmit={handleSubmit} className="space-y-[calc(var(--lh)*2)]" style={{ lineHeight: 'var(--lh)' }}>
+                {/* Honeypot — hidden from users, catches bots */}
+                <input
+                  type="text"
+                  name="website"
+                  id="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  style={{ display: 'none' }}
+                  aria-hidden="true"
+                />
+
                 <Input
                   name="name"
                   label="Full Name"
@@ -239,7 +320,6 @@ export function Contact() {
                   onChange={handleChange}
                   required
                   autoComplete="name"
-                  // Smart default: could pre-fill from auth context
                 />
                 <Input
                   name="email"
@@ -253,8 +333,8 @@ export function Contact() {
                 />
                 <Textarea
                   name="message"
-                  label="Project Details (Optional)"
-                  placeholder="Tell us about your project, timeline, budget range, or just say hi..."
+                  label="Project Details"
+                  placeholder="Tell us about your project, timeline, budget range, or just say hi... We'll route your message to the right team."
                   value={formData.message}
                   onChange={handleChange}
                   rows={5}
@@ -266,8 +346,8 @@ export function Contact() {
                   type="submit"
                   className="w-full"
                   rightIcon={<ArrowRight className="w-4 h-4" />}
-                  disabled={submitted}
-                  style={{ minHeight: '52px', fontSize: '14px', padding: '16px 32px', lineHeight: 'var(--lh)' }}
+                  disabled={submitted || honeypot.length > 0}
+                  style={{ minHeight: '56px', fontSize: '14px', padding: '18px 36px', lineHeight: 'var(--lh)' }}
                 >
                   {submitted ? (
                     <>

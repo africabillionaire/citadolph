@@ -48,33 +48,31 @@ export const Band = forwardRef<HTMLDivElement, BandProps>(
       ...props
     },
     ref
-  ) => (
-    <div
-      ref={ref}
-      className={cn(
-        'grid',
-        'grid-column-[var(--span)]',
-        'grid-template-columns-subgrid',
-        'align-items-[var(--align)]',
-        className
-      )}
-      style={{
-        '--span': span,
-        '--align': align,
-        '--gap': gap || 'var(--gutter)',
-        '--rows': rows,
-        gridColumn: span,
-        gridTemplateColumns: 'subgrid',
-        alignItems: align,
-        columnGap: gap || 'var(--gutter)',
-        gridTemplateRows: rows,
-        ...style,
-      } as React.CSSProperties}
-      {...props}
-    >
-      {children}
-    </div>
-  )
+  ) => {
+    // Compute inline styles without overriding className-based grid
+    const inlineStyles: React.CSSProperties = {
+      gridColumn: span,
+      gridTemplateColumns: 'subgrid',
+      alignItems: align,
+      columnGap: gap || 'var(--gutter)',
+      ...(rows && { gridTemplateRows: rows }),
+      ...style,
+    } as React.CSSProperties;
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'grid',
+          className
+        )}
+        style={inlineStyles}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
 );
 
 Band.displayName = 'Band';
@@ -85,7 +83,7 @@ export interface GridOverlayProps {
 }
 
 export function GridOverlay({ enabled, onToggle }: GridOverlayProps) {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
 
   return (
     <>

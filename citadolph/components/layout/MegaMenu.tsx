@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ExternalLink, Search, Users as UsersIcon } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import { Kicker, Heading, Text } from '@/components/ui/Typography';
-import { megaMenus } from '@/lib/site-content';
+import { Kicker, Text } from '@/components/ui/Typography';
+import { megaMenus, type MegaMenuData } from '@/lib/site-content';
 
 interface MegaMenuItem {
   label: string;
@@ -21,13 +21,6 @@ interface MegaMenuColumn {
   icon?: React.ComponentType<{ className?: string }>;
 }
 
-interface MegaMenuData {
-  title: string;
-  columns: readonly MegaMenuColumn[];
-  cta: { label: string; href: string };
-  secondaryCta?: { label: string; href: string; variant: 'outline' | 'primary' | 'ghost' };
-}
-
 interface MegaMenuProps {
   data: MegaMenuData;
   triggerRefs: React.RefObject<Record<string, HTMLButtonElement | null>>;
@@ -37,21 +30,13 @@ interface MegaMenuProps {
   position: 'left' | 'center' | 'right';
 }
 
-// Swiss Design Easing: Objective, crisp, professional deceleration. No playful bounces.
+// Swiss Design Easing: Objective, crisp, professional deceleration.
 const swissEasing = [0.16, 1, 0.3, 1] as const;
 
 const menuVariants = {
   hidden: { opacity: 0, y: -8 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 0.35, ease: swissEasing } 
-  },
-  exit: { 
-    opacity: 0, 
-    y: -4, 
-    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] as const } 
-  },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: swissEasing } },
+  exit: { opacity: 0, y: -4, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] as const } },
 };
 
 const positionStyles = {
@@ -60,27 +45,22 @@ const positionStyles = {
   right: { marginLeft: 'auto' },
 } as const;
 
+const ITEMS_PER_COLUMN = 5; // Hick's Law: limit visible choices
+
 export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, position }: MegaMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [focusedColumn, setFocusedColumn] = useState(0);
   const shouldReduceMotion = useReducedMotion();
 
-  /* Reset search each time the menu closes */
-  useEffect(() => {
-    if (!isOpen) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSearchQuery(prev => prev ? '' : prev);
-  }, [isOpen]);
-
-  /* Close on click outside */
+  /* Close on click outside — but not on click inside menu */
   useEffect(() => {
     if (!isOpen) return;
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        const triggerRef = triggerRefs.current[triggerKey] ?? null;
-        if (triggerRef && !triggerRef.contains(e.target as Node)) {
-          onClose();
-        }
+      const menu = menuRef.current;
+      const triggerRef = triggerRefs.current[triggerKey] ?? null;
+      if (menu && !menu.contains(e.target as Node) && triggerRef && !triggerRef.contains(e.target as Node)) {
+        onClose();
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -99,7 +79,10 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
         )
       ).filter((el) => el.getClientRects().length > 0);
 
-    const focusTimer = setTimeout(() => getFocusable()[0]?.focus(), 50);
+    const focusTimer = setTimeout(() => {
+      const searchInput = menu.querySelector<HTMLInputElement>('input[type="search"]');
+      searchInput?.focus();
+    }, 50);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -129,6 +112,17 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
       triggerRef?.focus();
     };
   }, [isOpen, onClose, triggerRefs, triggerKey]);
+
+  /* Arrow key navigation between columns */
+  const handleColumnKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>, colIndex: number, maxColumns: number) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setFocusedColumn((prev) => Math.min(prev + 1, maxColumns - 1));
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setFocusedColumn((prev) => Math.max(prev - 1, 0));
+    }
+  }, []);
 
   const filteredColumns = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -177,7 +171,7 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
             {/* Müller-Brockmann Grid: Strict modular layout */}
             <div className="grid grid-cols-12">
               
-              {/* Search Module: Full-width, hairline separation, technical feel */}
+              {/* Search Module: Full-width, hairline separation */}
               <div className="col-span-12 border-b border-[var(--border)] px-[calc(var(--gutter)*1.5)] py-4">
                 <div className="relative">
                   <Search
@@ -192,14 +186,21 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
                     onChange={(e) => setSearchQuery(e.target.value)}
                     aria-label={`Search ${data.title}`}
                     className="w-full border-b border-transparent bg-transparent py-2 pl-8 text-sm font-medium uppercase tracking-wider text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-muted)] focus:border-[var(--accent)]"
+                    autoFocus
                   />
                 </div>
               </div>
 
-              {/* Link Columns Module: Asymmetrical grid distribution */}
+              {/* Link Columns Module: Consistent 4-column grid (desktop) */}
               <div className="col-span-12 grid grid-cols-12 gap-x-[var(--gutter)] px-[calc(var(--gutter)*1.5)] py-[calc(var(--gutter)*1.5)]">
                 {filteredColumns.map((column, colIndex) => (
-                  <div key={column.heading} className="col-span-12 sm:col-span-6 lg:col-span-3">
+                  <div
+                    key={column.heading}
+                    className="col-span-12 sm:col-span-6 lg:col-span-3"
+                    onKeyDown={(e) => handleColumnKeyDown(e, colIndex, filteredColumns.length)}
+                    tabIndex={0}
+                    data-column-index={colIndex}
+                  >
                     {/* Column Header: Numbered, tracked, hairline bottom border */}
                     <div className="mb-4 flex items-baseline gap-3 border-b border-[var(--border)] pb-2">
                       <span
@@ -214,7 +215,8 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
                     </div>
                     
                     <ul role="list" className="space-y-0">
-                      {(searching ? column.items : column.items.slice(0, 5)).map((item) => (
+                      {/* Progressive Disclosure: Show only ITEMS_PER_COLUMN items + "View all" */}
+                      {(searching ? column.items : column.items.slice(0, ITEMS_PER_COLUMN)).map((item) => (
                         <li key={item.label}>
                           <Link
                             href={item.href}
@@ -235,7 +237,7 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
                         </li>
                       ))}
                       
-                      {!searching && column.items.length > 5 && (
+                      {!searching && column.items.length > ITEMS_PER_COLUMN && (
                         <li className="pt-3">
                           <Button
                             variant="ghost"
@@ -277,9 +279,9 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
                       </span>
                     </div>
                   </div>
-                  <Heading as="h3" size="4" weight="semibold" className="mb-2 text-left">
+                  <Text size="lg" weight="semibold" className="mb-2 text-left" style={{ color: 'var(--ink)', lineHeight: 'calc(var(--lh) * 1.2)' }}>
                     {data.title}
-                  </Heading>
+                  </Text>
                   <Text size="base" color="muted" className="max-w-xl text-left leading-relaxed">
                     Discover the full depth of our {data.title.toLowerCase()} — from strategy to
                     execution, we deliver measurable, objective outcomes.
@@ -291,7 +293,7 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
                     size="lg"
                     rightIcon={<ExternalLink className="w-4 h-4" />}
                     onClick={onClose}
-                    className="w-full sm:w-auto font-medium uppercase tracking-wider"
+                    className="w-full sm:w-auto font-medium uppercase tracking-wider min-h-[48px]"
                   >
                     {data.cta.label}
                   </Button>
@@ -300,7 +302,7 @@ export function MegaMenu({ data, triggerRefs, triggerKey, isOpen, onClose, posit
                       variant={data.secondaryCta.variant}
                       size="lg"
                       onClick={onClose}
-                      className="w-full sm:w-auto font-medium uppercase tracking-wider"
+                      className="w-full sm:w-auto font-medium uppercase tracking-wider min-h-[48px]"
                     >
                       {data.secondaryCta.label}
                     </Button>

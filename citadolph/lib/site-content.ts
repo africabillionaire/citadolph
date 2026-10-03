@@ -12,7 +12,7 @@ export interface NavItem {
 export interface MegaMenuItem {
   label: string;
   href: string;
-  description: string;
+  description?: string;
 }
 
 export interface MegaMenuColumn {

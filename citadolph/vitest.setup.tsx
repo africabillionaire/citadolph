@@ -112,6 +112,10 @@ vi.mock('lucide-react', () => {
     Save: createIcon('save'),
     RotateCcw: createIcon('rotate-ccw'),
     AlertCircle: createIcon('alert-circle'),
+    BarChart3: createIcon('bar-chart-3'),
+    Cpu: createIcon('cpu'),
+    Lock: createIcon('lock'),
+    Zap: createIcon('zap'),
   };
 });
 

@@ -50,15 +50,18 @@ describe('Contact Form Validation', () => {
     expect(progressBar).toHaveAttribute('aria-valuenow', '3');
   });
 
-  it('displays contact information', () => {
+  it('displays primary contact information (4 emails)', () => {
     render(<Contact />);
 
+    // Only 4 primary contacts shown now (reduced from 8 to reduce Hick's Law choices)
     expect(screen.getByText('hello@citadolph.com')).toBeInTheDocument();
     expect(screen.getByText('legal@citadolph.com')).toBeInTheDocument();
     expect(screen.getByText('hr@citadolph.com')).toBeInTheDocument();
     expect(screen.getByText('finance@citadolph.com')).toBeInTheDocument();
-    expect(screen.getByText('partner@citadolph.com')).toBeInTheDocument();
-    expect(screen.getByText('marketing@citadolph.com')).toBeInTheDocument();
+
+    // These should NOT be displayed (moved to footer/auto-routing)
+    expect(screen.queryByText('partner@citadolph.com')).not.toBeInTheDocument();
+    expect(screen.queryByText('marketing@citadolph.com')).not.toBeInTheDocument();
   });
 
   it('has proper accessibility attributes for progress bar', () => {
